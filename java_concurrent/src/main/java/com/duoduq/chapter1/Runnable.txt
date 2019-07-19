@@ -1,0 +1,28 @@
+Runnable接口的引入以及策略模式在Thread中的使用
+    Runnable的职责
+        Runnable接口非常简单，只定义了一个无参数无返回值的run方法。
+    创建线程有两种方式：1.构造一个Thread 2.实现Runnable接口(不严谨)
+    在jdk中代表线程的就只有Thread这个类，线程的执行单元就是run方法，可以通过继承Thread然后重写run方法实现自己的业务逻辑，
+    也可以实现Runnable接口实现自己的业务逻辑。代码如下：
+        /**
+         * If this thread was constructed using a separate
+         * <code>Runnable</code> run object, then that
+         * <code>Runnable</code> object's <code>run</code> method is called;
+         * otherwise, this method does nothing and returns.
+         * <p>
+         * Subclasses of <code>Thread</code> should override this method.
+         *
+         * @see     #start()
+         * @see     #stop()
+         * @see     #Thread(ThreadGroup, Runnable, String)
+         */
+        @Override
+        public void run() {
+        //如果构造Thread时传递了Runnable，则会执行Runnable的run方法
+            if (target != null) {
+                target.run();
+            }
+        //否则需要重写Thread类的run方法
+        }
+     准确地讲，创建线程只有一种方式那就是构造Thread类，而实现线程的执行单元则有两种方式，第一种是重写Thread的run方法，
+     第二种是实现Runnable接口的run方法，并且将Runnable实例用作构造Thread的参数。
