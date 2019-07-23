@@ -59,5 +59,65 @@ Thread API的详细介绍：
     了很多个线程，自增序列已经有了一定的消耗，因此我们自己创建的线程绝非第0号线程。
     获取当前线程：
         public static native Thread currentThread()用于返回当前执行线程的引用，这个方法虽然很简单，但是使用广泛。
-
-
+    设置线程上下文类加载器
+        1.public ClassLoader getContextClassLoader()获取线程上下文的类加载器，简单来说就是这个线程是由哪个类加载
+    器加载的，如果是在没有修改线程上下文类加载器的情况下，则保持与父线程同样的类加载器。
+        2.public void setContextClassLoader(ClassLoader cl)设置该线程的类加载器，这个方法可以打破Java类加载器的
+    父委托机制，有时候该方法也被称为JAVA类加载器的父委托机制，有时候该方法也被称为JAVA类加载器的后门。
+    线程interrupt：
+        与线程中断相关的API有如下几个：
+            1.public void interrupt()
+            2.public static boolean interrupted()
+            3.public boolean isInterrupted()
+        interrupt：
+            如下方法的调用会使得当前线程进入阻塞状态，而调用当前线程的interrupt方法，就可以打断阻塞。
+            1.Object的wait方法
+            2.Object的wait(long)方法
+            3.Object的wait(long,int)方法
+            4.Thread的sleep(long)方法
+            5.Thread的sleep(long,int)方法
+            6.Thread的join方法
+            7.Thread的join(long)方法
+            8.Thread的join(long,int)方法
+            9.InterruptibleChannel的io操作
+            10.Selector的wakeup方法。
+            11.其他方法
+            以上若干方法都会使得当前线程进入阻塞状态，若另外的一个线程调用被阻塞线程的interrupt方法，则会打断这种阻塞，因此
+        这种方法有时会被称为可中断方法，记住，打断一个线程并不等于该线程的生命周期结束，仅仅是打断了当前线程的阻塞状态。
+            一旦线程在阻塞的情况下被打断，都会抛出一个称为InterruptedException的异常，这个异常就像一个signal(信号)一样通
+        知当前线程被打断了。
+    isInterrupted
+        isInterrupted:
+            isInterruoted是Thread的一个成员方法，它主要判断当前线程是否被中断，该方法仅仅是对interrupt标识的一个判断，并
+        不会影响标识发生任何改变。
+        interrupted:
+            interrupted是一个静态方法，虽然其也用于判断当前线程是否被中断，但是它和成员方法isInterrupted还是有很大的区别的
+        ，调用该方法会直接擦除线程的interrupt标识，需要注意的是，如果当前线程被打断了，那么第一次调用interrupted会返回true,
+        并且立即擦除了interrupt标识；第二次包括以后的调用永远都会返回false，除非再次期间线程又一次地被打断。
+        interrupt注意事项：
+            打开Thread的源码，不难发现，isInterrupted方法和interrupted方法都调用了同一个本地方法：
+            private native boolean isInterrupted(boolean ClearInterrupted);
+            其中参数ClearInterrupted主要用来控制是否擦除线程interrupt的标识。
+            isInterrupte方法的源码中该参数为false，表示不想擦除:
+                public boolean isInterrupted() {
+                    return isInterrupted(false);
+                }
+            而interrupted静态方法中该参数则为true，表示想要擦除：
+                public static boolean interrupted() {
+                    return currentThread().isInterrupted(true);
+                }
+    线程join:
+        Thread的join方法同样是一个非常重要的方法，使用它的特性可以实现很多比较强大的功能，与sleep一样，它也是一个可中断的方法。
+    也就是说，如果有其他线程执行了对当前线程interrupt操作，它也会捕获到中断信号，并且擦除线程的interrupt标识，Thread的API为
+    我们提供了3个不同的join方法。具体如下：
+        1.public final void join() throws InterruptedException
+        2.public final synchronized void join(long millis)throws InterruptedException
+        3.public final synchronized void join(long millis, int nanos)throws InterruptedException
+        线程join方法详解：
+            join某个线程A，会使当前线程B进入等待，知道线程A结束生命周期，或者到达给定的时间，那么在此期间B线程是处于BLOCKED的，
+        而不是A线程。join方法会使当前线程永远地等待下去，直到期间被另外的线程中断，或者join的线程执行结束，也可以使用join的另外
+        两个重载方法，指定毫秒数，在指定时间到达之后，当前线程也会推出阻塞。
+    如何关闭一个线程：
+        正常关闭
+            1.线程结束生命周期正常结束
+            2.捕获中断信号关闭线程
