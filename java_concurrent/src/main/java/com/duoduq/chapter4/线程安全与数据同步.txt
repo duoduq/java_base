@@ -1,0 +1,92 @@
+线程安全与数据同步：
+    初识synchronized关键字：
+        什么是synchronized:
+            synchronized关键字可以实现一个简单的策略来防止线程干扰和内存一致性错误，如果一个对象对多个线程是可见的，
+        那么对该对象的所有读或者写都将通过同步的方式来进行
+            1.synchronized关键字提供了一种锁的机制，能够确保共享变量的互斥访问，从而防止数据不一致问题的出现。
+            2.synchronized关键字包括monitor enter和monitor exit两个JVM指令，它能购保证在任何时候任何线程执行到
+         monitor enter成功之前都必须从主内存中获取数据，而不是从缓存中，在monitor exit运行成功之后，共享变量被更新
+         后的值必须刷入主内存。
+            3.synchronized的指令严格遵循java happens-before规则，一个monitor exit指令之前必定要有一个monitor
+         enter.
+    synchronized关键字的用法
+        synchronized可以用于对代码块或方法进行修饰，而不能够用于对class以及变量进行修饰。
+        1.与monitor关联的对象不能为空
+            例如：public void syncMethod(){
+                    synchronized (mutex)    {
+                            //
+                    }
+                 }
+            Mutex为null，很多人还是会犯这么简单的问题每一个对象和一个monitor关联，对象都为null了，monitor肯定无从谈起。
+        2.synchronized作用域太大
+            由于synchronized关键字存在排他性，也就是说所有的线程必须串行地经过synchronized保护的共享区域，如果synchronized
+        作用域越大，则代表着其效率越低，甚至还会丧失开发的优势。
+            例如：public static Task implements Runnable{
+                    @Override
+                    public synchronized void run(){
+                        //
+                    }
+                 }
+            上面的代码对整个线程的执行单元都进行了synchronized同步，从而丧失了并发的能力，synchronized关键字应该尽可
+        能地只作用于共享资源(数据)的读写作用域。
+        3.不同的monitor企图锁相同的方法
+                public static Task implements Runnable{
+                    private final Object MUTEX = new Object();
+                    @Override
+                    public void run(){
+                        synchronized(MUTEX){
+                            //
+                        }
+                    }
+                 }
+
+                 public static void main(String[] args){
+                     for (int i = 0; i < 5; i++) {
+                         new Thread(Task::new).start();
+                     }}
+                 }
+                上面的代码构造了五个线程，同时也构造了五个Runnable实例，Runnable作为线程逻辑执行单元传递给Thread，然后你将
+        发现，synchronized根本互斥不了与之对应的作用域，线程之间进行monitor lock的争抢只能发生在与monitor关联的同一个引用上
+        ，上面的代码每一个线程争抢的monitor关联引用都是彼此独立的，因此不可能起到互斥的作用。
+        4.多个锁的交叉导致死锁
+            多个锁的交叉很容易引起线程出现死锁的情况，程序并没有任何错误输出，但就是不工作。
+            private final Object MUTEX_READ = new Object();
+            private final Object MUTEX_WRITE = new Object();
+            public void read(){
+                synchronized (MUTEX_READ) {
+                        synchronized (MUTEX_WRITE) {
+                                    //...
+                        }
+               }
+            }
+            public void write(){
+                synchronized (MUTEX_WRITE) {
+                        synchronized (MUTEX_READ) {
+                                    //...
+                        }
+                }
+            }
+    程序死锁的原因以及如何诊断：
+        程序死锁：
+            1.交叉锁可导致程序出现死锁
+                线程A持有R1的锁等待获取R2的锁，线程B持有R2的锁等待获取R1的锁，这种情况最容易导致发生死锁的问题。
+            2.内存不足
+                当并发请求系统可用内存时，如果此时系统内存不足，则可能会出现死锁的情况。
+            3.一问一答式的数据交换
+                服务端开启某个端口，等待客户端访问，客户端发送请求立即等待接收，由于某种原因服务端错过了客户端的请
+            求，仍然在等待一问一带式的数据交换，此时服务端和客户端都在等待着双方发送数据。
+            4.数据库锁
+                无论是数据库表级别的锁，还是行级别的锁，比如某个线程执行for update语句退出了事务，其他线程访问该
+            数据库时都将陷入死锁。
+            5.文件锁
+                某线程获得了文件锁意外退出，其他读取该文件的线程也将会进入死锁直到系统释放文件句柄资源。
+            6.死循环引起的死锁
+        死锁诊断：
+            1.交叉锁引起的死锁
+                运行DeadLock代码，程序将陷入死锁，打开jstack工具或者jconsole工具，Jstack-1 PID会直接发现死锁的信息。
+            2.死循环引起的死锁(假死)
+                运行HashMapDeadLock程序，也可以使用jstack、jconsole、jvisualvm工具或者jProfiler(收费的)工具进行
+            诊断，但是不会给出很明显的提示，因为工作的线程并未BLOCKED,而是始终处于RUNNABLE状态，CPU使用率居高不下，甚
+            至都不能够正常运行你的命令。
+                严格意义上来说死循环会导致程序假死，算不上真正的死锁，但是某个线程对CPU消耗过多，导致其他线程等待CPU，
+            内存等资源也会陷入死锁等待。
