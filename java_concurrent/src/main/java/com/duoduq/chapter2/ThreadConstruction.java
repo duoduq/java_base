@@ -46,27 +46,28 @@ public class ThreadConstruction {
          * 为了使的效果更加明显，在运行上面的代码过程中请指定Jvm内存参数为
          * java -Xmx512m -Xms64m ThreadConstruction 1
          */
-        if(integers.size()<1){
+        if (integers.size() < 1) {
             System.out.println("Please enter the stack size");
             System.exit(1);
         }
         ThreadGroup group = new ThreadGroup("TestGroup");
         Runnable runnable = new Runnable() {
             final int MAX = Integer.MAX_VALUE;
+
             @Override
             public void run() {
                 int i = 0;
                 recurse(1);
             }
 
-            private void recurse(int i){
+            private void recurse(int i) {
                 System.out.println(i);
-                if(i<MAX){
-                    recurse(i+1);
+                if (i < MAX) {
+                    recurse(i + 1);
                 }
             }
         };
-        Thread thread = new Thread(group,runnable,"Test",integers.get(0));
+        Thread thread = new Thread(group, runnable, "Test", integers.get(0));
         thread.start();
     }
 
