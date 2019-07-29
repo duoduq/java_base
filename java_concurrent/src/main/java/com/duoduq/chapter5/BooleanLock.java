@@ -23,7 +23,10 @@ public class BooleanLock implements Lock {
 
     @Override
     public void lock() throws InterruptedException {
-        synchronized (this) {
+
+        /*
+         //如果某个线程被打断，那么它将与可能还存在与blockedList中
+         synchronized (this) {
             while (locked) {
                 blockedList.add(currentThread());
                 this.wait();
@@ -31,7 +34,28 @@ public class BooleanLock implements Lock {
             blockedList.remove(currentThread());
             this.locked = true;
             this.currentThread = currentThread();
+        }*/
+
+        synchronized (this) {
+            while (locked) {
+                //暂存当前线程
+                final Thread tempThread = currentThread();
+                try {
+                    if (!blockedList.contains(tempThread))
+                        blockedList.add(tempThread);
+                    this.wait();
+                } catch (InterruptedException e) {
+                    //如果当前线程在wait时被中断，则从blockedList中将其删除，避免内存泄漏
+                    blockedList.remove(tempThread);
+                    //继续抛出异常
+                    throw e;
+                }
+            }
+            blockedList.remove(currentThread());
+            this.locked = true;
+            this.currentThread = currentThread();
         }
+
     }
 
     @Override
