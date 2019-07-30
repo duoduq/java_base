@@ -11,6 +11,7 @@ public class EmptyExceptionHandler {
 
     /**
      * 代码中没有设置默认的Handler,也没有对thread指定Handler，因此当thread出现异常时，会向上寻找group的uncaughtException方法
+     *
      * @param args
      */
     public static void main(String[] args) {
@@ -28,7 +29,7 @@ public class EmptyExceptionHandler {
             }
             //have will throw unchecked exception.
             System.out.println(1 / 0);
-        },"Test-Thread");
+        }, "Test-Thread");
         thread.start();
     }
 }

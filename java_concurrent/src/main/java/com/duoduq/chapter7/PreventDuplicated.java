@@ -33,7 +33,7 @@ public class PreventDuplicated {
         checkRunning();
 
         //简单模拟当前程序正在运行
-        for(;;){
+        for (; ; ) {
             try {
                 TimeUnit.MILLISECONDS.sleep(1);
                 System.out.println("program is running.");
@@ -45,11 +45,11 @@ public class PreventDuplicated {
 
     private static void checkRunning() throws IOException {
         Path path = getLockFile();
-        if(path.toFile().exists()){
+        if (path.toFile().exists()) {
             throw new RuntimeException("The program alearly running.");
         }
         Set<PosixFilePermission> perms = PosixFilePermissions.fromString(PERMISSIONS);
-        Files.createFile(path,PosixFilePermissions.asFileAttribute(perms));
+        Files.createFile(path, PosixFilePermissions.asFileAttribute(perms));
     }
 
     private static Path getLockFile() {

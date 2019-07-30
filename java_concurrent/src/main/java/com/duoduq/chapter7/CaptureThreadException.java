@@ -24,7 +24,7 @@ public class CaptureThreadException {
             //这里会出现unchecked异常
             //here will throw unchecked exception
             System.out.println(1 / 0);
-        },"Test-Thread");
+        }, "Test-Thread");
         thread.start();
     }
 }
